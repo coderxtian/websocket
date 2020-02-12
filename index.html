@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="main" style="width: 600px;height:400px;"></div>
+</body>
+<script src="js/echarts.js"></script>
+<script src="js/jquery.js"></script>
+<script type="text/javascript">
+    var api = "http://localhost:8080/websocket_api";
+
+    $(function () {
+        myecharts();
+        ws();
+    });
+
+    function myecharts() {
+        var myChart = echarts.init(document.getElementById('main'));
+        // 显示标题，图例和空的坐标轴
+        myChart.setOption({
+            title: {
+                text: '异步数据加载示例'
+            },
+            tooltip: {},
+            legend: {
+                data:['销量']
+            },
+            xAxis: {
+                data: []
+            },
+            yAxis: {},
+            series: [{
+                name: '销量',
+                type: 'bar',
+                data: []
+            }]
+        });
+        var xAxis = [];
+        var series = [];
+        // 异步加载数据
+        $.post(api + "/class/list/",{pageNum:1,pageSize:10}).done(function (data) {
+            for(let object of data.list){
+                xAxis.push(object.className);
+                series.push(object.classSum)
+            }
+            // 填入数据
+            myChart.setOption({
+                xAxis: {
+                    data: xAxis
+                },
+                series: [{
+                    // 根据名字对应到相应的系列
+                    name: '销量',
+                    data: series
+                }]
+            });
+        });
+    }
+
+
+
+    function ws() {
+        var socket;
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+        }else{
+            console.log("您的浏览器支持WebSocket");
+
+            //实现化WebSocket对象，指定要连接的服务器地址与端口  建立连接
+            //socket = new WebSocket("ws://localhost:9094/starManager/websocket/张三")
+            socket = new WebSocket("ws://localhost:8080/websocket_api/ws");
+            //打开事件
+            socket.onopen = function() {
+                console.log("Socket 已打开");
+                // socket.send("这是来自客户端的消息" + location.href + new Date());
+            };
+            //获得消息事件
+            socket.onmessage = function(msg) {
+                console.log(msg.data);
+                myecharts();
+                //发现消息进入    调后台获取
+            };
+            //关闭事件
+            socket.onclose = function() {
+                console.log("Socket已关闭");
+            };
+            //发生了错误事件
+            socket.onerror = function() {
+                alert("Socket发生了错误");
+            };
+            $(window).unload(function(){
+                socket.close();
+            });
+
+//                            		$("#btnSend").click(function() {
+//                            			socket.send("这是来自客户端的消息" + location.href + new Date());
+//                            		});
+//
+//                            		$("#btnClose").click(function() {
+//                            			socket.close();
+//                            		});
+        }
+
+    }
+</script>
+</html>
