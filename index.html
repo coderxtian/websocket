@@ -43,7 +43,7 @@
         var series = [];
         // 异步加载数据
         $.post(api + "/class/list/",{pageNum:1,pageSize:10}).done(function (data) {
-            console.log(data);
+            console.log("后台数据"+data);
             for(let object of data.list){
                 xAxis.push(object.className);
                 series.push(object.classSum)
